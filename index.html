@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#111827" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>말하는 가계부</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icon-192.png" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <link rel="stylesheet" href="styles.css?b=20260914-editdelete" />
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">간단하게 말하고, 찍고, 저장</p>
+        <h1>말하는 가계부</h1>
+      </div>
+      <button id="openMoreBtn" class="icon-btn" aria-label="더보기">⋯</button>
+    </header>
+
+    <section class="month-head" aria-label="월 선택">
+      <button id="prevMonthBtn" class="month-nav-btn" aria-label="이전 달">‹</button>
+      <button id="monthPickerBtn" class="month-picker-btn">
+        <span id="monthLabel">2026년 9월</span>
+        <small>월 변경</small>
+      </button>
+      <button id="nextMonthBtn" class="month-nav-btn" aria-label="다음 달">›</button>
+      <input id="monthInput" type="month" hidden />
+    </section>
+
+    <section class="summary-card" aria-label="선택한 달 요약">
+      <div class="summary-main">
+        <span id="expenseLabel">이번 달 지출</span>
+        <strong id="monthExpense">0원</strong>
+      </div>
+      <div class="summary-grid">
+        <div><span>수입</span><b id="monthIncome">0원</b></div>
+        <div><span>잔액</span><b id="monthBalance">0원</b></div>
+        <div><span>사용 건수</span><b id="monthCount">0건</b></div>
+        <div><span>하루 평균 지출</span><b id="dailyAverage">0원</b></div>
+      </div>
+    </section>
+
+    <section class="monthly-section" aria-label="월별 관리">
+      <div class="section-title-row">
+        <div>
+          <p class="eyebrow">월별 관리</p>
+          <h2>최근 6개월 지출</h2>
+        </div>
+        <button id="goCurrentMonthBtn" class="text-btn">이번 달</button>
+      </div>
+      <div id="monthlyBars" class="monthly-bars"></div>
+      <div class="category-card">
+        <div class="category-card-head">
+          <b>카테고리별 지출</b>
+          <span id="categoryMonthLabel"></span>
+        </div>
+        <div id="categoryBreakdown" class="category-breakdown"></div>
+      </div>
+    </section>
+
+    <section class="quick-actions">
+      <button id="voiceBtn" class="action-card primary">
+        <span class="action-icon">🎙️</span>
+        <span class="action-title">말로 입력</span>
+        <span class="action-sub">“오늘 점심 9천원 카드”</span>
+      </button>
+      <button id="cameraBtn" class="action-card">
+        <span class="action-icon">📷</span>
+        <span class="action-title">영수증 촬영</span>
+        <span class="action-sub">사진에서 금액·날짜 읽기</span>
+      </button>
+      <button id="galleryBtn" class="action-card">
+        <span class="action-icon">🖼️</span>
+        <span class="action-title">사진 불러오기</span>
+        <span class="action-sub">저장된 영수증도 가능</span>
+      </button>
+      <input id="cameraInput" type="file" accept="image/*" capture="environment" hidden />
+      <input id="galleryInput" type="file" accept="image/*" hidden />
+    </section>
+    <button id="manualBtn" class="manual-link">✍️ 직접 입력</button>
+
+    <section id="statusBox" class="status-box hidden" role="status"></section>
+
+    <section id="entryPanel" class="entry-panel hidden">
+      <div class="panel-head">
+        <div>
+          <p class="eyebrow">저장 전 확인</p>
+          <h2 id="entryPanelTitle">내용 확인</h2>
+        </div>
+        <button id="closeEntryBtn" class="icon-btn" aria-label="닫기">✕</button>
+      </div>
+
+      <div id="receiptPreviewWrap" class="receipt-preview hidden">
+        <img id="receiptPreview" alt="영수증 미리보기" />
+        <div class="ocr-state"><span id="ocrStateText">사진 준비됨</span><span id="ocrProgress"></span></div>
+      </div>
+
+      <div class="type-toggle" role="group" aria-label="수입 지출 선택">
+        <button class="type-btn active" data-type="expense">지출</button>
+        <button class="type-btn" data-type="income">수입</button>
+      </div>
+
+      <div class="form-grid">
+        <label>날짜<input id="dateInput" type="date" /></label>
+        <label>금액<input id="amountInput" type="number" inputmode="numeric" min="0" step="1" placeholder="0" /></label>
+        <label>분류<select id="categoryInput"></select></label>
+        <label>결제<select id="paymentInput"><option>카드</option><option>현금</option><option>계좌이체</option><option>기타</option></select></label>
+        <label>상호<input id="merchantInput" type="text" placeholder="예: 이마트" /></label>
+        <label class="wide">메모<input id="memoInput" type="text" placeholder="예: 점심 김치찌개" /></label>
+      </div>
+
+      <div id="speechTextWrap" class="speech-result hidden">
+        <span>인식 문장</span>
+        <p id="speechText"></p>
+      </div>
+
+      <button id="saveBtn" class="save-btn">확인하고 저장</button>
+    </section>
+
+    <section class="recent-section">
+      <div class="section-title-row">
+        <div>
+          <p class="eyebrow">최근 기록</p>
+          <h2>최근 내역</h2>
+        </div>
+        <div class="recent-head-actions">
+          <button id="addRecordBtn" class="add-record-btn">＋ 내역 추가</button>
+          <button id="showAllBtn" class="text-btn">선택 월 전체</button>
+        </div>
+      </div>
+      <div id="recentList" class="recent-list"></div>
+      <div id="emptyState" class="empty-state">아직 기록이 없습니다.<br />말하거나 영수증을 찍어 첫 기록을 남겨보세요.</div>
+    </section>
+
+    <footer>
+      <p>가계부 데이터와 영수증 사진은 이 기기의 브라우저에 저장됩니다.</p>
+    </footer>
+  </main>
+
+  <nav class="input-dock" aria-label="빠른 입력">
+    <button id="expenseQuickBtn" class="dock-btn expense" type="button">
+      <span class="dock-symbol">−</span><span>지출 입력</span>
+    </button>
+    <button id="voiceQuickBtn" class="dock-voice" type="button" aria-label="말로 입력">
+      <span>🎙️</span><small>말하기</small>
+    </button>
+    <button id="incomeQuickBtn" class="dock-btn income" type="button">
+      <span class="dock-symbol">＋</span><span>수입 입력</span>
+    </button>
+  </nav>
+
+  <div id="moreSheet" class="sheet-backdrop hidden">
+    <section class="bottom-sheet">
+      <div class="sheet-handle"></div>
+      <h2>관리</h2>
+      <button id="exportCsvBtn" class="sheet-btn">CSV 내보내기</button>
+      <button id="exportJsonBtn" class="sheet-btn">백업 파일 내보내기</button>
+      <label class="sheet-btn file-label">백업 파일 불러오기<input id="importJsonInput" type="file" accept="application/json" hidden /></label>
+      <button id="closeMoreBtn" class="sheet-btn subtle">닫기</button>
+    </section>
+  </div>
+
+  <div id="voiceOverlay" class="voice-overlay hidden">
+    <div class="voice-orb">🎙️</div>
+    <h2 id="voiceOverlayTitle">듣고 있어요</h2>
+    <p id="voiceLiveText">말씀해 주세요.</p>
+    <button id="stopVoiceBtn">완료</button>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <script src="app.js?b=20260914-editdelete"></script>
+  <script>
+    (() => {
+      const BUILD = '20260914-editdelete';
+      if (location.search.includes('update=')) history.replaceState(null, '', location.pathname);
+      fetch('version.json?t=' + Date.now(), { cache: 'no-store' })
+        .then(r => r.ok ? r.json() : null)
+        .then(v => { if (v && v.build && v.build !== BUILD) location.replace(location.pathname + '?update=' + Date.now()); })
+        .catch(() => {});
+    })();
+  </script>
+</body>
+</html>
